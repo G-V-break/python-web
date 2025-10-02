@@ -1,6 +1,7 @@
 import socket
 
-if __name__ == '__main__':
+
+def main():
     tcp_server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     tcp_server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, True)
 
@@ -10,9 +11,21 @@ if __name__ == '__main__':
     while True:
         new_socket, ip_port = tcp_server_socket.accept()
         rev_data = new_socket.recv(4096)
-        print(rev_data)
 
-        with open('E:/PythonProject/web方向/index.html', 'r',encoding='utf-8') as f:
+        if len(rev_data) == 0:
+            new_socket.close()
+            return
+
+        rev_content = rev_data.decode('utf-8')
+        print(rev_content)
+        request_list = rev_content.split(" ", maxsplit=2)
+
+        request_path = request_list[1]
+        print(request_path)
+        if request_path == '/':
+            request_path = "/index.html"
+
+        with open('E:/PythonProject/web方向' + request_path, 'rb') as f:
             file_data = f.read()
 
             # 将数据封装成http形式
@@ -23,7 +36,9 @@ if __name__ == '__main__':
         response_line = 'HTTP/1.1 200 OK\r\n'
         response_header = 'Server:Apache\r\n'
         response_body = file_data
-        response = response_line + response_header + "\r\n" + response_body
-        response_data = response.encode('utf-8')
+        response = (response_line + response_header + "\r\n").encode('utf-8') + response_body
+        new_socket.send(response)
 
-        new_socket.send(response_data)
+
+if __name__ == '__main__':
+    main()
